@@ -66,7 +66,7 @@ public class Bank {
                 }
             }
         } catch (NullPointerException e) {
-            e.printStackTrace();
+            e.getMessage();
         }
         return null;
     }

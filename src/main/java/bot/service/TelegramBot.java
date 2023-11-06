@@ -23,34 +23,32 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-
 @Slf4j
 @Component
 public class TelegramBot extends TelegramLongPollingBot {
-
     @Autowired
-    UserService service;
+    private UserService service;
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     final BotConfig config;
-    static String getInformation = "Актуальна інформація на:\n" +
+    String getInformation = "Актуальна інформація на:\n" +
              LocalDate.now();
-    static String allText;
-    static String settings = "Налаштування";
-    static String help_menu = """
+    String allText;
+    String settings = "Налаштування";
+    String mainMenu = "Основне меню";
+    String help_menu = """
             Короткі відомості про команди ⚙
-            /start - для початку роботи з ботом
+            /start - для початку роботи.
             /settings - для налаштування параметрів вибору.
 
-            Короткі відомості про роботу з ботом.
+            Короткі відомості.
             Цей бот призначений для отримання інформації про курс валют.
             За допомогою нього Ви можете отримати актуальний курс валют з обраних банків.
             Як новий користувач, у Вас обрано банк - PrivatBank, валюта - EUR, сповіщення вимкнені.
-            Оберіть в меню налаштувань комфортні для вас параметри, при завершенні поверніться на гологовне меню та натисніть на "Отримати інформацію."
+            Оберіть в меню налаштувань комфортні для вас параметри, при завершенні поверніться на гологовне меню та натисніть на "Отримати інформацію".
 
             Дякую що користуєтесь нашим ботом.❤
             """;
-
     public TelegramBot(BotConfig config) {
         this.config = config;
         List<BotCommand> listOfCommands = new ArrayList<>();
@@ -67,39 +65,36 @@ public class TelegramBot extends TelegramLongPollingBot {
     public String getBotUsername() {
         return config.getBotName();
     }
-
     @Override
     public String getBotToken() {
         return config.getToken();
     }
-
     @Override
     public void onUpdateReceived(Update update) {
         if (update.hasMessage() && update.getMessage().hasText()) {
             String massageTest = update.getMessage().getText();
             long chatId = update.getMessage().getChatId();
-            User users = service.findChatId(update.getMessage().getChatId());
 
             switch (massageTest) {
                 case "/start":
                     registerUser(update.getMessage());
-                    startCommandReceived(chatId, users.getUserName());
-                    startMenu(chatId, "Основне меню");
+                    startCommandReceived(chatId,update.getMessage().getChat().getUserName());
+                    startMenu(chatId, mainMenu);
                     break;
                 case "/help", "Допомога":
                     sendMessage(chatId, help_menu);
                     break;
                 case "Отримати інформацію":
-                    informationACurrency(chatId, getInformation, users.getCurrency(), users.getBankName(), users.getNumberAFP());
+                    informationACurrency(chatId, getInformation, service.findChatId(chatId).getCurrency(), service.findChatId(chatId).getBankName(), service.findChatId(chatId).getNumberAFP());
                     break;
                 case "Налаштування", "Назад до налаштувань", "/settings":
                     settingsMenu(chatId, settings);
                     break;
                 case "Назад":
-                    startMenu(chatId, "Основне меню.");
+                    startMenu(chatId, mainMenu);
                     break;
                 case "Банк":
-                    banks(chatId, "Оберіть банк.", users.getBankName());
+                    banks(chatId, "Оберіть банк.", service.findChatId(chatId).getBankName());
                     break;
                 case "PrivatBank":
                     banks(chatId, "Обрано PrivatBank.", 0);
@@ -111,7 +106,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     banks(chatId, "Обрано NBU.", 2);
                     break;
                 case "Кількість знаків після коми":
-                    numAFP(chatId, "Оберіть кільлькість знаків після коми.", users.getNumberAFP());
+                    numAFP(chatId, "Оберіть кільлькість знаків після коми.", service.findChatId(chatId).getNumberAFP());
                     break;
                 case "2":
                     numAFP(chatId, "Обрано: 2.", 0);
@@ -123,7 +118,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     numAFP(chatId, "Обрано: 4.", 2);
                     break;
                 case "Валюта":
-                    currencySelect(chatId, "Оберіть валюту.", users.getCurrency());
+                    currencySelect(chatId, "Оберіть валюту.", service.findChatId(chatId).getCurrency());
                     break;
                 case "USD", "EUR":
                     currencySelect(chatId, "Оберано USD і EUR.", 2);
@@ -135,7 +130,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     currencySelect(chatId, "Оберано USD.", 0);
                     break;
                 case "Час сповіщення":
-                    notificationUser(chatId, "Оберіть час сповіщення.", users.getHour());
+                    notificationUser(chatId, "Оберіть час сповіщення.", service.findChatId(chatId).getHour());
                     break;
                 case "Вимкнути сповіщення":
                         notificationUser(chatId, "Сповіщення вимкнуті.", 0);
@@ -174,7 +169,6 @@ public class TelegramBot extends TelegramLongPollingBot {
                 default:
                     sendMessage(chatId, "Щось не так");
             }
-
         }
     }
     private void startCommandReceived(long chatId, String name) {
@@ -231,23 +225,21 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         executeMessage(message);
     }
-
     protected User getUser(long chatId){
         SendMessage message = new SendMessage();
         message.setChatId(String.valueOf(chatId));
-
         return service.findChatId(Long.valueOf(message.getChatId()));
     }
     private void registerUser(Message message) {
         if (!service.existByChatId(message.getChatId())) {
-            var chatId = message.getChatId();
+            Long chatId = message.getChatId();
             var chat = message.getChat();
 
-            User user = getUser(message.getChatId());
+            User user = new User();
 
             user.setChatId(chatId);
             user.setUserName(chat.getUserName());
-            user.setBankName(BankName.MonoBank.ordinal());
+            user.setBankName(BankName.PrivatBank.ordinal());
             user.setNumberAFP(NumberAFP.two.ordinal());
             user.setCurrency(Currency.eur.ordinal());
             user.setHour(NotificationHour.zero.ordinal());
@@ -275,7 +267,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         row.add("NBU" + ((choice == 2) ? "✅" : ""));
         backToSettings(message, user1, keyboardMarkup, keyboardRows, row);
     }
-
     private void numAFP(long chatId, String textToSend, Integer choice){
         SendMessage message = new SendMessage();
         message.setChatId(String.valueOf(chatId));
@@ -340,6 +331,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         }else {
              countNum = 7;
         }
+
         if (bank == 0){
              bankText = "PrivatBank";
         }else if (bank == 1){
@@ -398,13 +390,10 @@ public class TelegramBot extends TelegramLongPollingBot {
                 doneInfoBuy = getValBuy.substring(0, countNum);
                 allText += "\nКупівля: " + doneInfoBuy;
             }
-
         }
-
         sendMessage(chatId, allText);
         executeMessage(message);
     }
-
     private void notificationUser(long chatId, String textToSend, Integer choice){
         SendMessage message = new SendMessage();
         message.setChatId(String.valueOf(chatId));
@@ -414,7 +403,6 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         user1.setHour(choice);
         service.save(user1);
-
 
         ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
         List<KeyboardRow> keyboardRows = new ArrayList<>();
@@ -457,7 +445,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         SendMessage message = new SendMessage();
         message.setChatId(String.valueOf(chatId));
         message.setText(textToSend);
-
         executeMessage(message);
     }
     private void executeMessage(SendMessage message){
