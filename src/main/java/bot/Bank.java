@@ -15,7 +15,7 @@ public class Bank {
     @SneakyThrows
     public String getRate(String value, String bank, String sellOrBuy) {
         String rateCode = null;
-        String url = null;
+        String url = "";
         String eq = null;
         String nameBuyOrSell = null;
 

@@ -18,6 +18,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMar
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -28,12 +29,27 @@ import java.util.concurrent.ScheduledExecutorService;
 public class TelegramBot extends TelegramLongPollingBot {
 
     @Autowired
-    UserService service = new UserService();
-
-    User user = new User();
+    UserService service;
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     final BotConfig config;
+    static String getInformation = "Актуальна інформація на:\n" +
+             LocalDate.now();
+    static String allText;
+    static String settings = "Налаштування";
+    static String help_menu = """
+            Короткі відомості про команди ⚙
+            /start - для початку роботи з ботом
+            /settings - для налаштування параметрів вибору.
+
+            Короткі відомості про роботу з ботом.
+            Цей бот призначений для отримання інформації про курс валют.
+            За допомогою нього Ви можете отримати актуальний курс валют з обраних банків.
+            Як новий користувач, у Вас обрано банк - PrivatBank, валюта - EUR, сповіщення вимкнені.
+            Оберіть в меню налаштувань комфортні для вас параметри, при завершенні поверніться на гологовне меню та натисніть на "Отримати інформацію."
+
+            Дякую що користуєтесь нашим ботом.❤
+            """;
 
     public TelegramBot(BotConfig config) {
         this.config = config;
@@ -70,26 +86,17 @@ public class TelegramBot extends TelegramLongPollingBot {
                     startCommandReceived(chatId, users.getUserName());
                     startMenu(chatId, "Основне меню");
                     break;
-                case "/help":
-
-                    break;
-                case "/settings":
-                    settingsMenu(chatId, "Налаштування");
-                    break;
-                case "Допомога":
-
+                case "/help", "Допомога":
+                    sendMessage(chatId, help_menu);
                     break;
                 case "Отримати інформацію":
-                    informationACurrency(chatId, "🎃", users.getCurrency(), users.getBankName(), users.getNumberAFP());
+                    informationACurrency(chatId, getInformation, users.getCurrency(), users.getBankName(), users.getNumberAFP());
                     break;
-                case "Налаштування":
-                    settingsMenu(chatId, "Налаштування");
+                case "Налаштування", "Назад до налаштувань", "/settings":
+                    settingsMenu(chatId, settings);
                     break;
                 case "Назад":
                     startMenu(chatId, "Основне меню.");
-                    break;
-                case "Назад до налаштувань":
-                    settingsMenu(chatId, "Налаштування");
                     break;
                 case "Банк":
                     banks(chatId, "Оберіть банк.", users.getBankName());
@@ -107,58 +114,61 @@ public class TelegramBot extends TelegramLongPollingBot {
                     numAFP(chatId, "Оберіть кільлькість знаків після коми.", users.getNumberAFP());
                     break;
                 case "2":
-                    numAFP(chatId, "Оберіть кільлькість знаків після коми.", 0);
+                    numAFP(chatId, "Обрано: 2.", 0);
                     break;
                 case "3":
-                    numAFP(chatId, "Оберіть кільлькість знаків після коми.", 1);
+                    numAFP(chatId, "Обрано: 3.", 1);
                     break;
                 case "4":
-                    numAFP(chatId, "Оберіть кільлькість знаків після коми.", 2);
+                    numAFP(chatId, "Обрано: 4.", 2);
                     break;
                 case "Валюта":
                     currencySelect(chatId, "Оберіть валюту.", users.getCurrency());
                     break;
-                case "USD":
-                    currencySelect(chatId, "Оберано USD.", 0);
+                case "USD", "EUR":
+                    currencySelect(chatId, "Оберано USD і EUR.", 2);
                     break;
-                case "EUR":
+                case "USD✅":
                     currencySelect(chatId, "Оберано EUR.", 1);
+                    break;
+                case "EUR✅":
+                    currencySelect(chatId, "Оберано USD.", 0);
                     break;
                 case "Час сповіщення":
                     notificationUser(chatId, "Оберіть час сповіщення.", users.getHour());
                     break;
                 case "Вимкнути сповіщення":
-                        notificationUser(chatId, "Обрано: Вимкнути сповіщення.", 0);
+                        notificationUser(chatId, "Сповіщення вимкнуті.", 0);
                     break;
                 case "9":
-                    notificationUser(chatId, "Обрано: 9 годину", 1);
+                    notificationUser(chatId, "Обрано: 9-у годину.", 1);
                     break;
                 case "10":
-                    notificationUser(chatId, "Обрано: 10 годину", 2);
+                    notificationUser(chatId, "Обрано: 10-у годину.", 2);
                     break;
                 case "11":
-                    notificationUser(chatId, "Обрано: 11 годину", 3);
+                    notificationUser(chatId, "Обрано: 11-у годину.", 3);
                     break;
                 case "12":
-                    notificationUser(chatId, "Обрано: 12 годину", 4);
+                    notificationUser(chatId, "Обрано: 12-у годину.", 4);
                     break;
                 case "13":
-                    notificationUser(chatId, "Обрано: 13 годину", 5);
+                    notificationUser(chatId, "Обрано: 13-у годину.", 5);
                     break;
                 case "14":
-                    notificationUser(chatId, "Обрано: 14 годину", 6);
+                    notificationUser(chatId, "Обрано: 14-у годину.", 6);
                     break;
                 case "15":
-                    notificationUser(chatId, "Обрано: 15 годину", 7);
+                    notificationUser(chatId, "Обрано: 15-у годину.", 7);
                     break;
                 case "16":
-                    notificationUser(chatId, "Обрано: 16 годину", 8);
+                    notificationUser(chatId, "Обрано: 16-у годину.", 8);
                     break;
                 case "17":
-                    notificationUser(chatId, "Обрано: 17 годину", 9);
+                    notificationUser(chatId, "Обрано: 17-у годину.", 9);
                     break;
                 case "18":
-                    notificationUser(chatId, "Обрано: 18 годину", 10);
+                    notificationUser(chatId, "Обрано: 18-у годину.", 10);
                     break;
 
                 default:
@@ -222,18 +232,18 @@ public class TelegramBot extends TelegramLongPollingBot {
         executeMessage(message);
     }
 
-    protected User getUser(long chatId, User user){
+    protected User getUser(long chatId){
         SendMessage message = new SendMessage();
         message.setChatId(String.valueOf(chatId));
 
-        return user = service.findChatId(Long.valueOf(message.getChatId()));
+        return service.findChatId(Long.valueOf(message.getChatId()));
     }
     private void registerUser(Message message) {
         if (!service.existByChatId(message.getChatId())) {
             var chatId = message.getChatId();
             var chat = message.getChat();
 
-            User user = getUser(message.getChatId(), new User());
+            User user = getUser(message.getChatId());
 
             user.setChatId(chatId);
             user.setUserName(chat.getUserName());
@@ -251,7 +261,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         message.setChatId(String.valueOf(chatId));
         message.setText(textToSend);
 
-        User user1 = getUser(chatId, user);
+        User user1 = getUser(chatId);
 
         user1.setBankName(choice);
         service.save(user1);
@@ -271,7 +281,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         message.setChatId(String.valueOf(chatId));
         message.setText(textToSend);
 
-        User user1 = getUser(chatId, user);
+        User user1 = getUser(chatId);
 
         user1.setNumberAFP(choice);
         service.save(user1);
@@ -290,17 +300,23 @@ public class TelegramBot extends TelegramLongPollingBot {
         message.setChatId(String.valueOf(chatId));
         message.setText(textToSend);
 
-        User user1 = getUser(chatId, user);
+        User user1 = getUser(chatId);
 
         user1.setCurrency(choice);
         service.save(user1);
 
         ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
         List<KeyboardRow> keyboardRows = new ArrayList<>();
-
         KeyboardRow row = new KeyboardRow();
-        row.add("USD" + ((choice == 0) ? "✅" : ""));
-        row.add("EUR" + ((choice == 1) ? "✅" : ""));
+
+        if (choice == 0 || choice == 1){
+            row.add("USD" + ((choice == 0) ? "✅" : ""));
+            row.add("EUR" + ((choice == 1) ? "✅" : ""));
+        }else if (choice == 2){
+            row.add("USD✅");
+            row.add("EUR✅");
+        }
+
         backToSettings(message, user1, keyboardMarkup, keyboardRows, row);
     }
     private void informationACurrency(long chatId, String textToSend, Integer currencySel, Integer bankSel, Integer numAFPSel){
@@ -316,9 +332,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         int currency =  currencySel;
         int bank =  bankSel;
         int numAFP =  numAFPSel;
-
-
-        String allText = "";
 
         if (numAFP == 0){
              countNum = 5;
@@ -337,30 +350,58 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         if (currency == 0){
             currencyText = "USD";
-        }else{
+        }else if(currency == 1){
             currencyText = "EUR";
-        }
+        }else
+            currencyText = "USD і EUR";
 
-        sendMessage(chatId,
-                "Обрано:\n\nБанк: " + bankText + "." +
-                        "\nВалюта: " + currencyText + "." +
-                        "\nК-сть знаків після коми: " + (countNum - 3) + ".");
+        allText = "Обрано:\n\nБанк: " + bankText + ".\nВалюта: " + currencyText + ".\nК-сть знаків після коми: " + (countNum - 3) + ".";
 
         if (bank == 0 || bank == 1){
-            String getValSell = bankClas.getRate(currencyText, bankText, "sell");
-            String doneInfoSell = getValSell.substring(0, countNum);
+            if (currency == 0 || currency == 1){
+                String getValSell = bankClas.getRate(currencyText, bankText, "sell");
+                String doneInfoSell = getValSell.substring(0, countNum);
 
-            String getValBuy = bankClas.getRate(currencyText, bankText, "buy");
-            String doneInfoBuy = getValBuy.substring(0, countNum);
-            allText = "\n\nПродаж: " + doneInfoSell + "\nКупівля: " + doneInfoBuy;
+                String getValBuy = bankClas.getRate(currencyText, bankText, "buy");
+                String doneInfoBuy = getValBuy.substring(0, countNum);
+                allText += "\n\nПродаж: " + doneInfoSell + "\nКупівля: " + doneInfoBuy;
+            }else{
+                allText += "\n\nUSD";
+                String getValSell = bankClas.getRate("USD", bankText, "sell");
+                String doneInfoSell = getValSell.substring(0, countNum);
+
+                String getValBuy = bankClas.getRate("USD", bankText, "buy");
+                String doneInfoBuy = getValBuy.substring(0, countNum);
+                allText += "\nПродаж: " + doneInfoSell + "\nКупівля: " + doneInfoBuy;
+
+                allText += "\n\nEUR";
+                getValSell = bankClas.getRate("EUR", bankText, "sell");
+                doneInfoSell = getValSell.substring(0, countNum);
+
+                getValBuy = bankClas.getRate("EUR", bankText, "buy");
+                doneInfoBuy = getValBuy.substring(0, countNum);
+                allText += "\nПродаж: " + doneInfoSell + "\nКупівля: " + doneInfoBuy;
+            }
         }else {
-            String getValBuy = bankClas.getRate(currencyText, bankText, "buy");
-            String doneInfoBuy = getValBuy.substring(0, countNum);
-            allText = "\n\nКупівля: " + doneInfoBuy;
+            if (currency == 0 || currency == 1){
+                String getValBuy = bankClas.getRate(currencyText, bankText, "buy");
+                String doneInfoBuy = getValBuy.substring(0, countNum);
+                allText += "\n\nКупівля: " + doneInfoBuy;
+            }else {
+                allText += "\n\nUSD";
+                String getValBuy = bankClas.getRate("USD", bankText, "buy");
+                String doneInfoBuy = getValBuy.substring(0, countNum);
+                allText += "\nКупівля: " + doneInfoBuy;
+
+                allText += "\n\nEUR";
+                getValBuy = bankClas.getRate("EUR", bankText, "buy");
+                doneInfoBuy = getValBuy.substring(0, countNum);
+                allText += "\nКупівля: " + doneInfoBuy;
+            }
+
         }
 
         sendMessage(chatId, allText);
-
         executeMessage(message);
     }
 
@@ -369,7 +410,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         message.setChatId(String.valueOf(chatId));
         message.setText(textToSend);
 
-        User user1 = getUser(chatId, user);
+        User user1 = getUser(chatId);
 
         user1.setHour(choice);
         service.save(user1);
